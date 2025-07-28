@@ -20,9 +20,10 @@ func main() {
 	// command to generate markov chains from the users.json file
 	generate := parser.NewCommand("generate", "Generates Markov chains from the users.json file")
 	gInput := generate.String("i", "input", &argparse.Options{Required: false, Help: "Input path", Default: "./exports/users.json"})
-	gOutput := generate.String("o", "output", &argparse.Options{Required: false, Help: "Output path", Default: "./exports/defs.json"})
+	gOutput := generate.String("o", "output", &argparse.Options{Required: false, Help: "Output path", Default: "./exports/defs"})
 	// uid:1234567890, u:cherry, rid:1234567890, r:admin
 	gFilters := generate.StringList("f", "filter", &argparse.Options{Required: false, Help: "Filter", Default: []string{}})
+	gOutType := generate.String("t", "type", &argparse.Options{Required: false, Help: "Output type", Default: "json"})
 	// parse arguments
 	err := parser.Parse(os.Args)
 	if err != nil {
@@ -56,8 +57,8 @@ func main() {
 			log.Println(err)
 			os.Exit(1)
 		}
-		internal.WriteUserMarkovs(userMarkovs, *gOutput)
-		log.Println("Generated markov chains to", *gOutput)
+		internal.WriteUserMarkovs(userMarkovs, *gOutput+"."+*gOutType)
+		log.Println("Generated markov chains to", *gOutput+"."+*gOutType)
 	} else {
 		err := fmt.Errorf("bad arguments, please check usage")
 		log.Println(parser.Usage(err))

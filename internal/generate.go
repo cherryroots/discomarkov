@@ -26,7 +26,7 @@ This is the structure of the clips deftemplate for ngrams
    (slot third-word)
    (slot frequency (type INTEGER)))
 
-For the deffacts
+For the deffacts, what we need to do is create a defact for each word, bigram, and trigram etc.
 (deffacts message-data
    ; Word frequencies
    (word (name hey) (frequency 2))
@@ -154,14 +154,15 @@ func GetNgram(messages []string, n int) (*Ngram, error) {
 	if n <= 0 {
 		return nil, fmt.Errorf("n must be greater than 0")
 	}
+	if n > 10 {
+		return nil, fmt.Errorf("n must be less than 10")
+	}
 	ngram := &Ngram{
 		N:     n,
 		Grams: make(map[string]int),
 	}
 	for _, message := range messages {
-		words := strings.FieldsFunc(message, func(r rune) bool {
-			return r == ' ' || r == '\n' || r == '\t' || r == '\r'
-		})
+		words := strings.Fields(message)
 		if len(words) < n {
 			continue
 		}
