@@ -89,29 +89,36 @@ UserLoop:
 	for _, user := range users {
 		if len(filters) > 0 {
 			for _, filter := range filters {
-				if strings.HasPrefix(filter, "uid:") {
-					if !strings.Contains(user.ID, filter[4:]) {
+				f := strings.Split(filter, ":")
+				if len(f) != 2 {
+					log.Printf("Invalid filter: %s\n", filter)
+					continue
+				}
+				fType := f[0]
+				fVal := f[1]
+				switch fType {
+				case "uid":
+					if !strings.Contains(user.ID, fVal) {
 						continue UserLoop
 					}
-				}
-				if strings.HasPrefix(filter, "rid:") {
+				case "rid":
 					for _, role := range user.Roles {
-						if !strings.Contains(role.ID, filter[4:]) {
+						if !strings.Contains(role.ID, fVal) {
 							continue UserLoop
 						}
 					}
-				}
-				if strings.HasPrefix(filter, "u:") {
-					if !strings.Contains(user.Name, filter[2:]) {
+				case "u":
+					if !strings.Contains(user.Name, fVal) {
 						continue UserLoop
 					}
-				}
-				if strings.HasPrefix(filter, "r:") {
+				case "r":
 					for _, role := range user.Roles {
-						if !strings.Contains(role.Name, filter[2:]) {
+						if !strings.Contains(role.Name, fVal) {
 							continue UserLoop
 						}
 					}
+				default:
+					return nil, fmt.Errorf("unknown filter type: %s", fType)
 				}
 			}
 		}
