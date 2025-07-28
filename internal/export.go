@@ -36,7 +36,7 @@ func ParseAllFiles(input string) ([]*Export, error) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			export, err := ParseFile(bytes)
+			export, err := ParseFile(&bytes)
 			if err != nil {
 				log.Printf("Failed to parse file %s: %v\n", file.Name(), err)
 				return
@@ -51,9 +51,9 @@ func ParseAllFiles(input string) ([]*Export, error) {
 }
 
 // ParseFile parses a file into an Export struct
-func ParseFile(bytes []byte) (*Export, error) {
+func ParseFile(bytes *[]byte) (*Export, error) {
 	var export Export
-	if err := json.Unmarshal(bytes, &export); err != nil {
+	if err := json.Unmarshal(*bytes, &export); err != nil {
 		return nil, err
 	}
 	return &export, nil
@@ -112,4 +112,18 @@ func WriteUsers(users map[string]*User, path string) error {
 		return err
 	}
 	return nil
+}
+
+// ReadUsers reads a map of users from a file
+func ReadUsers(path string) (map[string]*User, error) {
+	log.Printf("Reading users from %s...\n", path)
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var users map[string]*User
+	if err := json.Unmarshal(bytes, &users); err != nil {
+		return nil, err
+	}
+	return users, nil
 }

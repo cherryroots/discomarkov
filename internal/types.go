@@ -12,8 +12,9 @@ type User struct {
 
 // UserMarkov struct is a struct of a user and their markov chains
 type UserMarkov struct {
-	Name   string   `json:"name"`
-	Ngrams []*Ngram `json:"ngrams"`
+	Name          string         `json:"name"`
+	WordFrequency map[string]int `json:"wordFrequency"`
+	Ngrams        []*Ngram       `json:"ngrams"`
 }
 
 // Ngram struct is a struct of ngrams
