@@ -2,30 +2,46 @@ package internal
 
 // Internal use structs
 
+// User struct is a combined struct of the author of a message and all their messages
 type User struct {
 	ID       string   `json:"id"`
 	Name     string   `json:"name"`
 	Messages []string `json:"messages"`
-	Roles    []string `json:"roles"`
+	Roles    []Role   `json:"roles"`
+}
+
+// UserMarkov struct is a struct of a user and their markov chains
+type UserMarkov struct {
+	Name   string   `json:"name"`
+	Ngrams []*Ngram `json:"ngrams"`
+}
+
+// Ngram struct is a struct of ngrams
+type Ngram struct {
+	N     int            `json:"n"`
+	Grams map[string]int `json:"grams"` // words and their frequency
 }
 
 // Discord Chat Exporter JSON Format
 
+// Export struct is the root of the JSON file
 type Export struct {
 	Guild        Guild     `json:"guild"`
-	Channels     []Channel `json:"channels"`
+	Channel      Channel   `json:"channel"`
 	DateRange    DateRange `json:"dateRange"`
 	ExportedAt   string    `json:"exportedAt"`
 	Messages     []Message `json:"messages"`
 	MessageCount int       `json:"messageCount"`
 }
 
+// Guild struct is the guild of the export
 type Guild struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`
-	IconUrl string `json:"iconUrl"`
+	IconURL string `json:"iconUrl"`
 }
 
+// Channel struct is the channel of the export
 type Channel struct {
 	ID         string  `json:"id"`
 	Type       string  `json:"type"`
@@ -35,11 +51,13 @@ type Channel struct {
 	Topic      *string `json:"topic,omitempty"`
 }
 
+// DateRange struct is the date range of the export
 type DateRange struct {
 	After  *string `json:"after,omitempty"`
 	Before *string `json:"before,omitempty"`
 }
 
+// Role struct is the role of the author of a message
 type Role struct {
 	ID       string  `json:"id"`
 	Name     string  `json:"name"`
@@ -47,6 +65,7 @@ type Role struct {
 	Position int     `json:"position"`
 }
 
+// Author struct is the author of a message
 type Author struct {
 	ID            string  `json:"id"`
 	Name          string  `json:"name"`
@@ -58,6 +77,7 @@ type Author struct {
 	AvatarURL     *string `json:"avatarUrl,omitempty"`
 }
 
+// Message struct is the message of the export
 type Message struct {
 	ID                 string  `json:"id"`
 	Type               string  `json:"type"`
