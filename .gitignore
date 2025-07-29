@@ -1,5 +1,5 @@
 exports/input/*.json
 exports/*.json
-exports/*.cl
+exports/*.clp
 discomarkov
 .vscode

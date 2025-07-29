@@ -8,44 +8,126 @@ import (
 	"strings"
 )
 
-/*
+var ngramTemplates = map[int]string{
+	1:  "word",
+	2:  "bigram",
+	3:  "trigram",
+	4:  "quadgram",
+	5:  "pentagram",
+	6:  "hexagram",
+	7:  "heptagram",
+	8:  "octagram",
+	9:  "nonogram",
+	10: "dectogram",
+}
 
-This is the structure of the clips deftemplate for ngrams
-(deftemplate word
-   (slot name)
-   (slot frequency (type INTEGER)))
+var ngramSlots = map[int]string{
+	1:  "first-word",
+	2:  "second-word",
+	3:  "third-word",
+	4:  "fourth-word",
+	5:  "fifth-word",
+	6:  "sixth-word",
+	7:  "seventh-word",
+	8:  "eighth-word",
+	9:  "ninth-word",
+	10: "tenth-word",
+}
 
-(deftemplate bigram
-   (slot first-word)
-   (slot second-word)
-   (slot frequency (type INTEGER)))
+// UserMarkovsToClips converts a UserMarkovs to a clips deffacts file
+func UserMarkovsToClips(userMarkovs map[string]*UserMarkov) (map[string]string, error) {
+	// function input is a map of users with their ngram and a word frequencies
+	// function output is a map of deffacts for each user
+	deffacts := make(map[string]string)
+	for _, userMarkov := range userMarkovs {
+		log.Printf("Generating deffacts for %s...\n", userMarkov.Name)
+		
+		// Pre-calculate total size for better memory allocation
+		estimatedSize := 1000 + len(userMarkov.WordFrequency)*50
+		for _, ngram := range userMarkov.Ngrams {
+			estimatedSize += len(ngram.Grams) * 100
+		}
+		
+		var builder strings.Builder
+		builder.Grow(estimatedSize)
+		builder.WriteString("(deffacts message-data\n")
+		
+		log.Printf("Generating word frequencies for %s...\n", userMarkov.Name)
+		// Process word frequencies
+		for word, frequency := range userMarkov.WordFrequency {
+			builder.WriteString("   (word (name \"")
+			builder.WriteString(FormatClipsString(word))
+			builder.WriteString("\") (frequency ")
+			builder.WriteString(fmt.Sprintf("%d", frequency))
+			builder.WriteString("))\n")
+		}
+		
+		log.Printf("Generating ngram frequencies for %s...\n", userMarkov.Name)
+		// Process ngrams with optimized string operations
+		for _, ngram := range userMarkov.Ngrams {
+			log.Printf("Generating ngram frequencies for %s...\n", ngramTemplates[ngram.N])
+			ngramTemplate := ngramTemplates[ngram.N]
+			
+			// Pre-split all grams to avoid repeated string.Split calls
+			type gramData struct {
+				words     []string
+				frequency int
+			}
+			gramList := make([]gramData, 0, len(ngram.Grams))
+			for gram, frequency := range ngram.Grams {
+				gramList = append(gramList, gramData{
+					words:     strings.Split(gram, " "),
+					frequency: frequency,
+				})
+			}
+			
+			// Build ngram entries efficiently
+			for _, gd := range gramList {
+				builder.WriteByte('(')
+				builder.WriteString(ngramTemplate)
+				builder.WriteByte(' ')
+				
+				for i, word := range gd.words {
+					builder.WriteByte('(')
+					builder.WriteString(ngramSlots[i+1])
+					builder.WriteString(" \"")
+					builder.WriteString(FormatClipsString(word))
+					builder.WriteString("\") ")
+				}
+				
+				builder.WriteString("(frequency ")
+				builder.WriteString(fmt.Sprintf("%d", gd.frequency))
+				builder.WriteString("))\n")
+			}
+		}
+		
+		builder.WriteString(")\n")
+		deffacts[userMarkov.Name] = builder.String()
+	}
+	return deffacts, nil
+}
 
-(deftemplate trigram
-   (slot first-word)
-   (slot second-word)
-   (slot third-word)
-   (slot frequency (type INTEGER)))
+// FormatClipsString formats a string for clips
+func FormatClipsString(str string) string {
+	// escape \ with \\"
+	str = strings.ReplaceAll(str, `\`, `\\`)
+	// escape " with \"
+	str = strings.ReplaceAll(str, `"`, `\"`)
+	return str
+}
 
-For the deffacts, what we need to do is create a defact for each word, bigram, and trigram etc.
-(deffacts message-data
-   ; Word frequencies
-   (word (name hey) (frequency 2))
-   ;  and so on for all words
-
-   ; Bigram frequencies
-   (bigram (first-word hey) (second-word what) (frequency 1))
-   (bigram (first-word what) (second-word s) (frequency 1))
-   (bigram (first-word s) (second-word up) (frequency 1))
-   (bigram (first-word lol) (second-word no) (frequency 1))
-   ;  and so on for all bigrams
-)
-
-*/
-
-// UserMarkovsToClipsFiles converts a UserMarkovs to a clips deffacts file
-func UserMarkovsToClipsFiles(userMarkovs map[string]*UserMarkov) (string, error) {
-	_ = userMarkovs
-	return "", nil
+// WriteClipsDeffacts writes a map of deffacts to a file
+func WriteClipsDeffacts(deffacts map[string]string, path string) error {
+	for name, deffact := range deffacts {
+		path := fmt.Sprintf("%s/%s.clp", path, name)
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			log.Printf("File %s exists, deleting...\n", path)
+			os.Remove(path)
+		}
+		log.Printf("Writing deffacts to %s...\n", path)
+		os.WriteFile(path, []byte(deffact), 0o644)
+	}
+	return nil
 }
 
 // WriteUserMarkovs writes a map of user markovs to a file
